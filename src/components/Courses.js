@@ -1,15 +1,24 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { createCourse, loadPosts } from './../redux/actions/courseAction';
 import {
-  Button,
-  TextField,
-  List,
-  ListItem,
-  ListItemText,
-} from '@material-ui/core';
+  createCourse,
+  loadCoursesThunk,
+} from './../redux/actions/courseAction';
+import { Button, TextField } from '@material-ui/core';
+import { CoursesList } from './CoursesList';
+import PropTypes from 'prop-types';
 
 class Courses extends Component {
+  componentDidMount() {
+    const { courses, loadCourses } = this.props;
+    console.log(loadCourses);
+    if (courses.length === 0) {
+      loadCourses().catch((e) => {
+        throw e;
+      });
+    }
+  }
+
   state = {
     course: {
       title: '',
@@ -27,16 +36,10 @@ class Courses extends Component {
 
   handleSubmit = ($event) => {
     $event.preventDefault();
-    this.props.dispatch(createCourse(this.state.course.title));
+    createCourse(this.state.course.title).catch((e) => {
+      throw e;
+    });
   };
-
-  componentDidMount() {
-    fetch('https://jsonplaceholder.typicode.com/posts')
-      .then((response) => response.json())
-      .then((posts) => {
-        this.props.dispatch(loadPosts(posts));
-      });
-  }
 
   render() {
     return (
@@ -52,13 +55,7 @@ class Courses extends Component {
         <Button color="primary" type="submit">
           Save
         </Button>
-        <List>
-          {this.props.courses.map((course) => (
-            <ListItem divider key={course.title}>
-              <ListItemText>{course.title}</ListItemText>
-            </ListItem>
-          ))}
-        </List>
+        <CoursesList courses={this.props.courses}></CoursesList>
       </form>
     );
   }
@@ -72,4 +69,15 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(mapStateToProps)(Courses);
+const mapDispatchToProps = {
+  createCourse,
+  loadCourses: loadCoursesThunk,
+};
+
+Courses.propTypes = {
+  courses: PropTypes.array.isRequired, // state property
+  createCourse: PropTypes.func.isRequired, // action
+  loadCourses: PropTypes.func.isRequired, // action
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Courses);
